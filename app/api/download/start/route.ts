@@ -201,6 +201,14 @@ async function runDownloadJob(
           stderrBuffer
         )
       }
+      proc.on("close", (exitCode) => {
+        if (exitCode !== 0) {
+          console.warn(
+            `yt-dlp exited with code ${exitCode} (some items may have been skipped). stderr: ${stderrBuffer || "(empty)"}, stdout tail: ${stdoutLineBuffer || "(empty)"}`
+          )
+        }
+        resolve()
+      })
       resolve()
     })
   })

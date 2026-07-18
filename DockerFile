@@ -2,12 +2,11 @@ FROM node:20-bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    python3 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Download the standalone yt-dlp binary directly — no pip/PATH ambiguity
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+# Standalone compiled binary — no external Python dependency
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o /usr/local/bin/yt-dlp \
     && chmod a+rx /usr/local/bin/yt-dlp \
     && yt-dlp --version
 
