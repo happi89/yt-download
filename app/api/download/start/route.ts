@@ -35,14 +35,18 @@ function isYouTubeUrl(url: string) {
   }
 }
 
-async function tarDirectory(sourceDir: string, outPath: string, files: string[]): Promise<void> {
+async function tarDirectory(
+  sourceDir: string,
+  outPath: string,
+  files: string[]
+): Promise<void> {
   await tar.create(
     {
       gzip: true,
       file: outPath,
       cwd: sourceDir,
     },
-    files,
+    files
   )
 }
 
@@ -50,11 +54,17 @@ export async function POST(request: NextRequest) {
   const { url, format, mode } = await request.json()
 
   if (typeof url !== "string" || !url.trim()) {
-    return NextResponse.json({ error: "Please enter a YouTube video URL." }, { status: 400 })
+    return NextResponse.json(
+      { error: "Please enter a YouTube video URL." },
+      { status: 400 }
+    )
   }
 
   if (!isYouTubeUrl(url)) {
-    return NextResponse.json({ error: "Only YouTube URLs are supported." }, { status: 400 })
+    return NextResponse.json(
+      { error: "Only YouTube URLs are supported." },
+      { status: 400 }
+    )
   }
 
   const selectedFormat = format === "mp3" ? "mp3" : "mp4"
@@ -78,7 +88,7 @@ async function runDownloadJob(
   jobId: string,
   url: string,
   selectedFormat: "mp3" | "mp4",
-  playlist: boolean,
+  playlist: boolean
 ) {
   const tempDir = await mkdtemp(join(tmpdir(), "yt-download-"))
   updateJob(jobId, { tempDir, status: "downloading" })
@@ -115,7 +125,7 @@ async function runDownloadJob(
           "--ignore-errors",
           ...printArgs,
           "--format",
-          "best[ext=mp4]/bestvideo[height<=?1080]+bestaudio/best",
+          "best[ext=mp4][height<=?1080]/bestvideo[height<=?1080]+bestaudio/best",
           "--output",
           outputTemplate,
           url,
@@ -151,7 +161,8 @@ async function runDownloadJob(
 
         if (playlist && job && job.totalItems > 0) {
           const completedItems = Math.max(0, job.currentItem - 1)
-          const overall = ((completedItems + itemPercent / 100) / job.totalItems) * 100
+          const overall =
+            ((completedItems + itemPercent / 100) / job.totalItems) * 100
           updateJob(jobId, { percent: Math.min(100, Math.round(overall)) })
         } else {
           updateJob(jobId, { percent: Math.round(itemPercent) })
@@ -185,7 +196,10 @@ async function runDownloadJob(
       // or failure afterward based on whether any files actually landed
       // in tempDir.
       if (exitCode !== 0) {
-        console.warn(`yt-dlp exited with code ${exitCode} (some items may have been skipped):`, stderrBuffer)
+        console.warn(
+          `yt-dlp exited with code ${exitCode} (some items may have been skipped):`,
+          stderrBuffer
+        )
       }
       resolve()
     })
@@ -195,7 +209,9 @@ async function runDownloadJob(
 
   const files = await readdir(tempDir)
   if (files.length === 0) {
-    throw new Error(stderrBuffer || "yt-dlp completed but did not produce any files")
+    throw new Error(
+      stderrBuffer || "yt-dlp completed but did not produce any files"
+    )
   }
 
   if (playlist) {
@@ -213,7 +229,9 @@ async function runDownloadJob(
 
   const outputFile = files.find((file) => file.endsWith(`.${selectedFormat}`))
   if (!outputFile) {
-    throw new Error(stderrBuffer || "yt-dlp completed but did not produce a file")
+    throw new Error(
+      stderrBuffer || "yt-dlp completed but did not produce a file"
+    )
   }
 
   const fileStat = await stat(join(tempDir, outputFile))
