@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createJob, updateJob, getJob } from "@/lib/download-jobs"
 
 const YTDLP_BIN = process.env.YTDLP_BIN || "yt-dlp"
+const COOKIES_PATH = "/app/cookies.txt"
 
 function sanitizeTitle(title: string) {
   const normalized = title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
@@ -33,6 +34,10 @@ function isYouTubeUrl(url: string) {
   } catch {
     return false
   }
+}
+
+function getCookiesArgs(): string[] {
+  return process.env.YT_COOKIES_BASE64 ? ["--cookies", COOKIES_PATH] : []
 }
 
 async function tarDirectory(
@@ -103,12 +108,15 @@ async function runDownloadJob(
     ? ["--print", "before_dl:PLAYLIST_ITEM %(playlist_index)s/%(n_entries)s"]
     : []
 
+  const cookiesArgs = getCookiesArgs()
+
   const ytDlpArgs =
     selectedFormat === "mp3"
       ? [
           playlistFlag,
           "--newline",
           "--ignore-errors",
+          ...cookiesArgs,
           ...printArgs,
           "--extract-audio",
           "--audio-format",
@@ -123,6 +131,7 @@ async function runDownloadJob(
           playlistFlag,
           "--newline",
           "--ignore-errors",
+          ...cookiesArgs,
           ...printArgs,
           "--format",
           "best[ext=mp4][height<=?1080]/bestvideo[height<=?1080]+bestaudio/best",
@@ -201,14 +210,6 @@ async function runDownloadJob(
           stderrBuffer
         )
       }
-      proc.on("close", (exitCode) => {
-        if (exitCode !== 0) {
-          console.warn(
-            `yt-dlp exited with code ${exitCode} (some items may have been skipped). stderr: ${stderrBuffer || "(empty)"}, stdout tail: ${stdoutLineBuffer || "(empty)"}`
-          )
-        }
-        resolve()
-      })
       resolve()
     })
   })
