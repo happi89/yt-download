@@ -40,6 +40,29 @@ function getCookiesArgs(): string[] {
   return process.env.YT_COOKIES_BASE64 ? ["--cookies", COOKIES_PATH] : []
 }
 
+function getFriendlyErrorMessage(rawError: string): string {
+  if (
+    rawError.includes("The caller does not have permission") ||
+    rawError.includes("Unable to download API page: HTTP Error 403")
+  ) {
+    return "This playlist couldn't be accessed. Make sure the playlist is set to Public (not Private or Unlisted-restricted) in YouTube's settings, then try again."
+  }
+
+  if (rawError.includes("Sign in to confirm you're not a bot")) {
+    return "YouTube is blocking this request. This usually means the session cookies have expired — they may need to be refreshed."
+  }
+
+  if (rawError.includes("cookies are no longer valid")) {
+    return "The saved YouTube session has expired and needs to be refreshed."
+  }
+
+  if (rawError.includes("Video unavailable")) {
+    return "One or more videos in this playlist are unavailable and were skipped."
+  }
+
+  return rawError || "Unable to download this right now."
+}
+
 async function tarDirectory(
   sourceDir: string,
   outPath: string,
@@ -218,9 +241,7 @@ async function runDownloadJob(
 
   const files = await readdir(tempDir)
   if (files.length === 0) {
-    throw new Error(
-      stderrBuffer || "yt-dlp completed but did not produce any files"
-    )
+    throw new Error(getFriendlyErrorMessage(stderrBuffer))
   }
 
   if (playlist) {
@@ -238,9 +259,7 @@ async function runDownloadJob(
 
   const outputFile = files.find((file) => file.endsWith(`.${selectedFormat}`))
   if (!outputFile) {
-    throw new Error(
-      stderrBuffer || "yt-dlp completed but did not produce a file"
-    )
+    throw new Error(getFriendlyErrorMessage(stderrBuffer))
   }
 
   const fileStat = await stat(join(tempDir, outputFile))

@@ -67,18 +67,18 @@ export default function Page() {
         setTotalItems(job.totalItems ?? 0)
 
         if (job.status === "ready") {
-  eventSource.close()
-  try {
-    await fetchAndSaveFile(jobId)
-    setMessage("Download complete")
-    setUrl("")
-  } catch (error) {
-    reject(error)
-  } finally {
-    setIsDownloading(false)
-    setStatus(null)
-  }
-}
+          eventSource.close()
+          try {
+            await fetchAndSaveFile(jobId)
+            setMessage("Download complete")
+            setUrl("")
+          } catch (error) {
+            reject(error)
+          } finally {
+            setIsDownloading(false)
+            setStatus(null)
+          }
+        }
 
         if (job.status === "error") {
           eventSource.close()
@@ -109,7 +109,8 @@ export default function Page() {
     const contentDisposition = response.headers.get("content-disposition") || ""
     const filenameMatch = contentDisposition.match(/filename="([^"]+)"/i)
     const downloadName =
-      filenameMatch?.[1] || (mode === "playlist" ? "playlist.zip" : `youtube-video.${format}`)
+      filenameMatch?.[1] ||
+      (mode === "playlist" ? "playlist.zip" : `youtube-video.${format}`)
 
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -149,26 +150,36 @@ export default function Page() {
             placeholder="Paste a YouTube video or playlist URL"
           />
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <label htmlFor="mode" className="text-xs text-foreground dark:text-white">
+            <label
+              htmlFor="mode"
+              className="text-xs text-foreground dark:text-white"
+            >
               Download
             </label>
             <select
               id="mode"
               value={mode}
-              onChange={(event) => setMode(event.target.value as "video" | "playlist")}
+              onChange={(event) =>
+                setMode(event.target.value as "video" | "playlist")
+              }
               className="h-8 rounded-lg border border-black/20 bg-background px-2.5 text-sm text-foreground dark:border-white/20 dark:bg-black dark:text-white"
             >
               <option value="video">Single video</option>
               <option value="playlist">Whole playlist</option>
             </select>
 
-            <label htmlFor="format" className="text-xs text-foreground dark:text-white">
+            <label
+              htmlFor="format"
+              className="text-xs text-foreground dark:text-white"
+            >
               Format
             </label>
             <select
               id="format"
               value={format}
-              onChange={(event) => setFormat(event.target.value as "mp4" | "mp3")}
+              onChange={(event) =>
+                setFormat(event.target.value as "mp4" | "mp3")
+              }
               className="h-8 rounded-lg border border-black/20 bg-background px-2.5 text-sm text-foreground dark:border-white/20 dark:bg-black dark:text-white"
             >
               <option value="mp4">MP4</option>
@@ -181,7 +192,11 @@ export default function Page() {
           </div>
           {mode === "playlist" ? (
             <div className="mt-1 font-mono text-xs text-foreground/60 dark:text-white/60">
-              Downloads all videos in the playlist as a single .zip file. This may take a while.
+              Downloads all videos in the playlist as a single .tar.gz file.
+              This may take a while.
+              <br />
+              Note: the playlist must be set to <strong>Public</strong> on
+              YouTube for this to work reliably.
             </div>
           ) : null}
         </div>
@@ -201,15 +216,21 @@ export default function Page() {
         ) : null}
 
         {message ? (
-          <div className="font-mono text-xs text-foreground/80 dark:text-white/80">{message}</div>
+          <div className="font-mono text-xs text-foreground/80 dark:text-white/80">
+            {message}
+          </div>
         ) : null}
 
         <div className="flex items-center justify-between gap-2 font-mono text-xs text-foreground/80 dark:text-white/80">
-          <span>(Press <kbd>d</kbd> to toggle dark mode)</span>
+          <span>
+            (Press <kbd>d</kbd> to toggle dark mode)
+          </span>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            onClick={() =>
+              setTheme(resolvedTheme === "dark" ? "light" : "dark")
+            }
           >
             {resolvedTheme === "dark" ? "Light" : "Dark"}
           </Button>
